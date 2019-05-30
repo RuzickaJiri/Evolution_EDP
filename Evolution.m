@@ -85,7 +85,7 @@ end
 x_length = 10 ; % space dimension
 points = 100 ; % iteration number space
 Dt = 0.01 ; % time step
-tfinal = 200000 ; %final time
+tfinal = 20000000 ; %final time
 nt = tfinal/Dt ; % iteration number time
 h = x_length/points ; % space step
 
@@ -125,14 +125,14 @@ end
 
 %Mutation matrix
 Mutation = zeros(phenotypes_number, phenotypes_number) ;
-Mutation(1,1) = -0.5  ;
+Mutation(1,1) = 0.0;
 Mutation(1,2) = 0.0 ;
-Mutation(1,3) = 0.0 ;
+Mutation(1,3) = -1 ;
 Mutation(2,1) = 0.0;
-Mutation(2,2) = -0.5 ;
+Mutation(2,2) = 0.0 ;
 Mutation(2,3) = 0 ;
-Mutation(3,1) = 0.5 ;
-Mutation(3,2) = 0.5 ;
+Mutation(3,1) = 1 ;
+Mutation(3,2) = 0.0 ;
 Mutation(3,3) = 0 ;
 
 epsilon = 0.1 ;
@@ -172,7 +172,7 @@ while t < tfinal
     for i=1:phenotypes_number
         E(i,:) = E(i,:)*M(:,:,i);
     end
-    if mod(t,100)==0
+    if mod(t,3000)==0
     figure(1) ;
 
     plot(1:points, E(1,1:points)) ;
