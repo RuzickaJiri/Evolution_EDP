@@ -2,12 +2,12 @@
 %% First equation
 
 % parameters
-h = x_length/points ; % space step
 x_length = 10 ; % space dimension
 points = 100 ; % iteration number space
 Dt = 0.01 ; % time step
 tfinal = 200000 ; %final time
 nt = tfinal/Dt ; % iteration number time
+h = x_length/points ; % space step
 
 %Diffusion constants
 phenotypes_number = 3 ; %number of phenotypes
@@ -82,12 +82,12 @@ end
 
 
 % parameters
-h = x_length/points ; % space step
 x_length = 10 ; % space dimension
 points = 100 ; % iteration number space
 Dt = 0.01 ; % time step
 tfinal = 200000 ; %final time
 nt = tfinal/Dt ; % iteration number time
+h = x_length/points ; % space step
 
 %Diffusion constants
 phenotypes_number = 3 ; %number of phenotypes
