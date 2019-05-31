@@ -310,6 +310,7 @@ Dt = 0.001 ; % time step
 tfinal = 400 ; %final time
 nt = tfinal/Dt ; % iteration number time
 h = x_length/points ; % space step
+afficher=false;
 
 %Diffusion constants
 phenotypes_number = 3 ; %number of phenotypes
@@ -401,7 +402,7 @@ t = 0 ;
 while t < nt
      E=E+ Dt*(E*M+E*(diag(A+E*M2)));
     
-    if mod(t,1000)==0 
+    if mod(t,1000)==0 && afficher 
         figure(1)
         Es=0;
         for i=1:phenotypes_number
@@ -427,6 +428,7 @@ Dt = 0.001 ; % time step
 tfinal = 1000 ; %final time
 nt=tfinal/Dt;% number of time steps
 h = x_length/points ; % space step
+afficher= true;
 
 
 phenotypes_number = 5 ; %number max of phenotypes
@@ -549,7 +551,7 @@ while t < nt
 
     E(:) =E+ Dt*(E*M+E*(diag(A+E*M2)));
     
-    if mod(t,1000)==0 
+    if mod(t,1000)==0 && afficher 
         figure(1)
         Es=0;
         for i=1:phenotypes_number
@@ -568,3 +570,131 @@ while t < nt
     
 end
 
+%% Equation with Memory 
+
+
+% parameters
+x_length = 10 ; % space dimension
+points = 100 ; % iteration number space
+Dt = 0.0001 ; % time step
+tfinal = 100 ; %final time
+nt = tfinal/Dt ; % iteration number time
+h = x_length/points ; % space step
+afficher=false;
+
+%Diffusion constants
+phenotypes_number = 3 ; %number of phenotypes
+phe_diff = zeros(phenotypes_number, 1) ; %vector of phenotypes diffusion
+phe_diff(1) = 0.1 ;
+phe_diff(2) = 0.4 ;
+phe_diff(3) = 0.9 ;
+
+%Environment matrix
+E = zeros(1,phenotypes_number*points) ;
+E(20) = 1 ;
+E(points+50) = 1 ;
+E(2*points+80) = 1 ;
+
+%Sources vectors
+a = 0.1:0.1:0.1*points;% fonction de répartition de la nouriture
+a= abs(cos(a))+0.1;
+A=zeros(1,3*phenotypes_number);
+for i=0:phenotypes_number-1
+A(i*points+1:i*points+points)=a;%répartition de la nouriture par espèce
+end
+
+
+%Mutation matrix
+Mutation = zeros(phenotypes_number, phenotypes_number) ;
+Mutation(1,1) = -1;
+Mutation(1,2) = 0.5 ;
+Mutation(1,3) = 0.5;
+Mutation(2,1) = 0.5;
+Mutation(2,2) = -1;
+Mutation(2,3) = 0.5 ;
+Mutation(3,1) = 0.5 ;
+Mutation(3,2) = 0.5 ;
+Mutation(3,3) = -1 ;
+
+epsilon=0.01;
+
+% linear Discretization matrix
+M = zeros(points* phenotypes_number, points* phenotypes_number) ;
+
+for  i=0:phenotypes_number-1
+    for n=2:points-1
+        k=i*points+n;
+        % termes liés à la difusion
+        M(k,k) = phe_diff(i+1)*(-2)/(h*h) ;
+        if n<points
+        M(k+1,k) = phe_diff(i+1)/(h*h) ;
+        end
+        if n>1
+        M(k-1,k) = phe_diff(i+1)/(h*h) ;
+        end
+        for j=0:phenotypes_number-1
+            p=j*points+n;
+            % termes liés aux mutations
+            M(p,k)= M(p,k)+(epsilon*Mutation(i+1,j+1));
+        end
+    end
+    
+    % termes aux limites
+    M(i*points+1,i*points+1)=-phe_diff(i+1)/(h*h);
+    M(i*points+2,i*points+1)= phe_diff(i+1)/(h*h);
+    M((i+1)*points,(i+1)*points)=-phe_diff(i+1)/(h*h);
+    M((i+1)*points-1,(i+1)*points)= +phe_diff(i+1)/(h*h);
+    
+    
+end
+
+% non linear Discretization matrix
+M2 = zeros(points* phenotypes_number, points* phenotypes_number) ;
+
+for i=0:phenotypes_number-1
+    for n=1:points
+        k=i*points+n;
+        for j=0:phenotypes_number-1
+            M2(j*points+n,i*points+n)=-1;  % termes liés à la consomation de ressources
+        end
+    end
+    
+end
+
+
+
+
+
+
+
+% Evolution
+
+
+Mem=zeros(nt/1000,phenotypes_number*points);
+
+t = 1 ;
+while t < nt
+     E=E+ Dt*(E*M+E*(diag(A+E*M2)));
+    if mod(t,1000)==0
+        Mem(t/1000,:)=E;
+    end
+    if mod(t,1000)==0 && afficher 
+        figure(1)
+        Es=0;
+        for i=1:phenotypes_number
+            plot((h:h:x_length), E((i-1)*points+1:(i-1)*points+points),'Color',[i/phenotypes_number,(phenotypes_number-i)/phenotypes_number,1]) ;
+            hold on
+            Es=Es+E((i-1)*points+1:(i-1)*points+points);
+        end
+        plot((h:h:x_length),Es,'r--')
+        hold on
+        plot((h:h:x_length),a,'g--')
+        hold off
+    end
+    t=t+1;
+end
+figure(2)
+CO(1:1000,1:100,1) = ones(1000,100); % red
+CO(1:1000,101:200,2) = ones(1000,100); % green
+CO(1:1000,201:300,3) = ones(1000,100); % blue
+surf(Mem,CO,'EdgeColor','none')
