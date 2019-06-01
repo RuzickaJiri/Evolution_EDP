@@ -283,12 +283,13 @@ while t < tfinal
     end 
     for i=1:phenotypes_number
         E(i,:) = E(i,:)*M(:,:,i);
-    end
+    end,'FaceAlpha',0.1
     if mod(t,50)==0 
         figure(1)
         for i=1:phenotypes_number
             x=1:points;
             y=1:points;
+            C0=0;
             CO(:,:,3) = ones(points)*(i)/(phenotypes_number);
             CO(:,:,1) = ones(points)*(phenotypes_number-i)/(phenotypes_number);
             CO(:,:,2) = ones(points)*(phenotypes_number-i*0.5)/(phenotypes_number);
@@ -424,19 +425,19 @@ end
 % parameters
 x_length = 10 ; % space dimension
 points = 100 ; % iteration number space
-Dt = 0.001 ; % time step
-tfinal = 1000 ; %final time
-nt=tfinal/Dt;% number of time steps
+tfinal = 400 ; %final time
+Dt = tfinal/100000 ; % time step
+nt = tfinal/Dt ; % iteration number time
 h = x_length/points ; % space step
-afficher= true;
+afficher=false;
 
 
 phenotypes_number = 5 ; %number max of phenotypes
-apparition= 0.1*nt/phenotypes_number;% temps d'aparition des nouveau phénotypes 
+apparition= nt/phenotypes_number;% temps d'aparition des nouveau phénotypes 
 phe_diff = zeros(phenotypes_number, 1) ; %vector of phenotypes diffusion
 phe_diff(1) = 0.1 ;
 for i=2:phenotypes_number
-    phe_diff(i)=phe_diff(i-1)*0.5*(1+rand); % chaquenouveau phénotype aura une vitesse de difusion plus faible que le précédent
+    phe_diff(i)=phe_diff(i-1)*0.8; % chaquenouveau phénotype aura une vitesse de difusion plus faible que le précédent
 end
 
 %Environment matrix
@@ -444,9 +445,10 @@ E = zeros(1,phenotypes_number*points) ;
 E(1:points) = 1 ;
 
 %Sources vectors
-a = 0.1:0.1:0.1*points;% fonction de répartition de la nouriture
-a= abs(cos(a))+0.1;
-A=zeros(1,points*phenotypes_number);
+a = -pi/2:2*pi/(points-1):3*pi/2;% fonction de répartition de la nouriture
+a= cos(a);
+a=a*diag(a)*0.8+0.2;
+A=zeros(1,3*phenotypes_number);
 for i=0:phenotypes_number-1
 A(i*points+1:i*points+points)=a;%répartition de la nouriture par espèce
 end
@@ -455,7 +457,7 @@ end
 %Mutation matrix
 Mutation = zeros(phenotypes_number, phenotypes_number) ;
 
-epsilon=0.01;
+epsilon=0.1;
 
 
 % linear Discretization matrix
@@ -507,11 +509,18 @@ end
 
 
 % Evolution 
-t = 1 ;
+
+Mem=zeros(nt/1000,phenotypes_number*points);
+t = 0 ;
 
 nbphen=1; % nombre de phénotype dans l'experimentation en cours
-while t < nt
+while t < nt-1
     t=t+1;
+    
+    if mod(t,1000)==0
+        Mem(t/1000 +1,:)=E;
+    end
+    
     if t>apparition
         %E
         %pause(1)
@@ -570,53 +579,84 @@ while t < nt
     
 end
 
+figure(1)
+Es=0;
+for i=1:phenotypes_number
+    plot((h:h:x_length), E((i-1)*points+1:(i-1)*points+points),'Color',[(mod(i,3)==1)*i/phenotypes_number,(mod(i,3)==2)*i/phenotypes_number,(mod(i,3)==0)*i/phenotypes_number]) ;
+    hold on
+    Es=Es+E((i-1)*points+1:(i-1)*points+points);
+end
+plot((h:h:x_length),Es,'r--')
+hold on
+plot((h:h:x_length),a,'g--')
+hold off
+
+figure(3)
+    C(:,1:100,1) = ones(100,100)*0.2;
+    C(:,101:200,2) = ones(100,100)*0.4;
+    C(:,201:300,3) = ones(100,100)*0.6;
+    C(:,301:400,1) = ones(100,100)*0.8;
+    C(:,401:500,2) = ones(100,100);
+    %C(:,501:600,3) = ones(100,100)*0.6;
+    %C(:,601:700,1) = ones(100,100)*0.7;
+    %C(:,701:800,2) = ones(100,100)*0.8;
+    %C(:,801:900,3) = ones(100,100)*0.9;
+    %C(:,901:1000,2) = ones(100,100)
+    surf(Mem,C,'LineStyle','-', 'FaceAlpha',0.5) ;
+    
+
 %% Equation with Memory 
 
 
 % parameters
 x_length = 10 ; % space dimension
 points = 100 ; % iteration number space
-Dt = 0.0001 ; % time step
-tfinal = 100 ; %final time
+tfinal = 500 ; %final time
+Dt = tfinal/100000 ; % time step
 nt = tfinal/Dt ; % iteration number time
 h = x_length/points ; % space step
-afficher=false;
+afficher=true;
 
 %Diffusion constants
-phenotypes_number = 3 ; %number of phenotypes
+phenotypes_number = 5 ; %number of phenotypes
 phe_diff = zeros(phenotypes_number, 1) ; %vector of phenotypes diffusion
 phe_diff(1) = 0.1 ;
-phe_diff(2) = 0.4 ;
-phe_diff(3) = 0.9 ;
+for i=2:phenotypes_number
+    phe_diff(i) = 1.5*phe_diff(i-1) ;
+end
 
 %Environment matrix
 E = zeros(1,phenotypes_number*points) ;
-E(20) = 1 ;
-E(points+50) = 1 ;
-E(2*points+80) = 1 ;
+for i=1:phenotypes_number
+E((i-1)*points+1:(i-1)*points+20) = 0.1:-0.005:0.005 ; 
+end
+
 
 %Sources vectors
-a = 0.1:0.1:0.1*points;% fonction de répartition de la nouriture
-a= abs(cos(a))+0.1;
+a = -pi/2:2*pi/(points-1):3*pi/2;% fonction de répartition de la nouriture
+a= cos(a);
+a=a*diag(a)*0.8+0.2;
 A=zeros(1,3*phenotypes_number);
 for i=0:phenotypes_number-1
 A(i*points+1:i*points+points)=a;%répartition de la nouriture par espèce
 end
 
 
-%Mutation matrix
-Mutation = zeros(phenotypes_number, phenotypes_number) ;
-Mutation(1,1) = -1;
-Mutation(1,2) = 0.5 ;
-Mutation(1,3) = 0.5;
-Mutation(2,1) = 0.5;
-Mutation(2,2) = -1;
-Mutation(2,3) = 0.5 ;
-Mutation(3,1) = 0.5 ;
-Mutation(3,2) = 0.5 ;
-Mutation(3,3) = -1 ;
+%Mutation matrix, conservation and equipropability of mutation
+Mutation=zeros(phenotypes_number);
+for i=1:phenotypes_number 
+    for j=1:phenotypes_number
+        if i == j
+            Mutation(i,j)=-1;
+        else
+            Mutation(i,j)=1/(phenotypes_number-1);
+        end
 
-epsilon=0.01;
+    end
+
+end
+
+epsilon=0.001;
 
 % linear Discretization matrix
 M = zeros(points* phenotypes_number, points* phenotypes_number) ;
@@ -668,15 +708,13 @@ end
 
 
 % Evolution
-
-
 Mem=zeros(nt/1000,phenotypes_number*points);
 
-t = 1 ;
-while t < nt
+t = 0 ;
+while t < nt-1
      E=E+ Dt*(E*M+E*(diag(A+E*M2)));
     if mod(t,1000)==0
-        Mem(t/1000,:)=E;
+        Mem(t/1000 +1,:)=E;
     end
     if mod(t,1000)==0 && afficher 
         figure(1)
@@ -693,8 +731,169 @@ while t < nt
     end
     t=t+1;
 end
+
+figure(1)
+Es=0;
+for i=1:phenotypes_number
+    plot((h:h:x_length), E((i-1)*points+1:(i-1)*points+points),'Color',[(mod(i,3)==1)*i/phenotypes_number,(mod(i,3)==2)*i/phenotypes_number,(mod(i,3)==0)*i/phenotypes_number]) ;
+    hold on
+    Es=Es+E((i-1)*points+1:(i-1)*points+points);
+end
+plot((h:h:x_length),Es,'r--')
+hold on
+plot((h:h:x_length),a,'g--')
+hold off
+
 figure(2)
-CO(1:1000,1:100,1) = ones(1000,100); % red
-CO(1:1000,101:200,2) = ones(1000,100); % green
-CO(1:1000,201:300,3) = ones(1000,100); % blue
-surf(Mem,CO,'EdgeColor','none')
+    C(:,1:100,1) = ones(100,100)*0.2;
+    C(:,101:200,2) = ones(100,100)*0.4;
+    C(:,201:300,3) = ones(100,100)*0.6;
+    C(:,301:400,1) = ones(100,100)*0.8;
+    C(:,401:500,2) = ones(100,100);
+    %C(:,501:600,3) = ones(100,100)*0.6;
+    %C(:,601:700,1) = ones(100,100)*0.7;
+    %C(:,701:800,2) = ones(100,100)*0.8;
+    %C(:,801:900,3) = ones(100,100)*0.9;
+    %C(:,901:1000,2) = ones(100,100)
+    surf(Mem,C,'LineStyle','-', 'FaceAlpha',0.5) ;
+    
+%% Equation with Penalisation of slow dif
+
+
+% parameters
+x_length = 10 ; % space dimension
+points = 100 ; % iteration number space
+tfinal = 400 ; %final time
+Dt = tfinal/500000 ; % time step
+nt = tfinal/Dt ; % iteration number time
+h = x_length/points ; % space step
+afficher=true;
+
+%Diffusion constants
+phenotypes_number = 2 ; %number of phenotypes
+phe_diff = zeros(phenotypes_number, 1) ; %vector of phenotypes diffusion
+phe_diff(1) = 0.5 ;
+phe_diff(2) = 1 ;
+
+%Environment matrix
+E = zeros(1,phenotypes_number*points) ;
+for i=1:phenotypes_number
+E((i-1)*points+1:(i-1)*points+20) = 0.1:-0.005:0.005 ; 
+end
+
+
+%Sources vectors
+a = -pi/2:2*pi/(points-1):3*pi/2;% fonction de répartition de la nouriture
+a= cos(a);
+a=a*diag(a)*0.8+0.2;
+A=zeros(1,points*phenotypes_number);
+for i=0:phenotypes_number-1
+A(i*points+1:i*points+points)=a;%répartition de la nouriture par espèce
+end
+A(1:points)=A(1:points)-0.01; %pénalisation de A
+
+%Mutation matrix
+Mutation = zeros(phenotypes_number, phenotypes_number) ;
+Mutation(1,1) = -1;
+Mutation(1,2) = 0.5 ;
+Mutation(1,3) = 0.5;
+Mutation(2,1) = 0.5;
+Mutation(2,2) = -1;
+Mutation(2,3) = 0.5 ;
+Mutation(3,1) = 0.5 ;
+Mutation(3,2) = 0.5 ;
+Mutation(3,3) = -1 ;
+
+epsilon=0.0;
+
+% linear Discretization matrix
+M = zeros(points* phenotypes_number, points* phenotypes_number) ;
+
+for  i=0:phenotypes_number-1
+    for n=2:points-1
+        k=i*points+n;
+        % termes liés à la difusion
+        M(k,k) = phe_diff(i+1)*(-2)/(h*h) ;
+        if n<points
+        M(k+1,k) = phe_diff(i+1)/(h*h) ;
+        end
+        if n>1
+        M(k-1,k) = phe_diff(i+1)/(h*h) ;
+        end
+        for j=0:phenotypes_number-1
+            p=j*points+n;
+            % termes liés aux mutations
+            M(p,k)= M(p,k)+(epsilon*Mutation(i+1,j+1));
+        end
+    end
+    
+    % termes aux limites
+    M(i*points+1,i*points+1)=-phe_diff(i+1)/(h*h);
+    M(i*points+2,i*points+1)= phe_diff(i+1)/(h*h);
+    M((i+1)*points,(i+1)*points)=-phe_diff(i+1)/(h*h);
+    M((i+1)*points-1,(i+1)*points)= +phe_diff(i+1)/(h*h);
+    
+    
+end
+
+% non linear Discretization matrix
+M2 = zeros(points* phenotypes_number, points* phenotypes_number) ;
+
+for i=0:phenotypes_number-1
+    for n=1:points
+        k=i*points+n;
+        for j=0:phenotypes_number-1
+            M2(j*points+n,i*points+n)=-1;  % termes liés à la consomation de ressources
+        end
+    end
+    
+end
+
+
+
+
+
+
+
+% Evolution
+Mem=zeros(100,phenotypes_number*points);
+
+t = 0 ;
+while t < nt-1
+     E=E+ Dt*(E*M+E*(diag(A+E*M2)));
+    if mod(t,5000)==0
+        Mem(t/5000 +1,:)=E;
+    end
+    if mod(t,1000)==0 && afficher 
+        figure(1)
+        Es=0;
+        for i=1:phenotypes_number
+            plot((h:h:x_length), E((i-1)*points+1:(i-1)*points+points),'Color',[i/phenotypes_number,(phenotypes_number-i)/phenotypes_number,1]) ;
+            hold on
+            Es=Es+E((i-1)*points+1:(i-1)*points+points);
+        end
+        plot((h:h:x_length),Es,'r--')
+        hold on
+        plot((h:h:x_length),a,'g--')
+        hold off
+    end
+    t=t+1;
+end
+figure(1)
+Es=0;
+for i=1:phenotypes_number
+    plot((h:h:x_length), E((i-1)*points+1:(i-1)*points+points),'Color',[(mod(i,3)==1)*i/phenotypes_number,(mod(i,3)==2)*i/phenotypes_number,(mod(i,3)==0)*i/phenotypes_number]) ;
+    hold on
+    Es=Es+E((i-1)*points+1:(i-1)*points+points);
+end
+plot((h:h:x_length),Es,'r--')
+hold on
+plot((h:h:x_length),a,'g--')
+hold off
+
+figure(2)
+    C(:,1:100,1) = ones(100,100)*0.5;
+    C(:,101:200,2) = ones(100,100);
+    C(:,101:200,3) = zeros(100,100);
+    
+    surf(Mem,C,'LineStyle','-', 'FaceAlpha',0.5) ;
