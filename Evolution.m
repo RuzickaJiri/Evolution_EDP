@@ -311,7 +311,7 @@ Dt = 0.001 ; % time step
 tfinal = 400 ; %final time
 nt = tfinal/Dt ; % iteration number time
 h = x_length/points ; % space step
-afficher=false;
+afficher=true;
 
 %Diffusion constants
 phenotypes_number = 3 ; %number of phenotypes
@@ -327,8 +327,9 @@ E(points+50) = 1 ;
 E(2*points+80) = 1 ;
 
 %Sources vectors
-a = 0.1:0.1:0.1*points;% fonction de répartition de la nouriture
-a= abs(cos(a))+0.1;
+a = -pi/2:2*pi/(points-1):3*pi/2;% fonction de répartition de la nouriture
+a= cos(a);
+a=a*diag(a)*0.8+0.2;
 A=zeros(1,3*phenotypes_number);
 for i=0:phenotypes_number-1
 A(i*points+1:i*points+points)=a;%répartition de la nouriture par espèce
@@ -425,19 +426,19 @@ end
 % parameters
 x_length = 10 ; % space dimension
 points = 100 ; % iteration number space
-tfinal = 1200 ; %final time
-Dt = tfinal/100000 ; % time step
+tfinal = 2500 ; %final time
+Dt = tfinal/200000 ; % time step
 nt = tfinal/Dt ; % iteration number time
 h = x_length/points ; % space step
 afficher=false;
 
 
 phenotypes_number = 10 ; %number max of phenotypes
-apparition= 0.5*nt/phenotypes_number;% temps d'aparition des nouveau phénotypes 
+apparition= 0.2*nt/phenotypes_number;% temps d'aparition des nouveau phénotypes 
 phe_diff = zeros(phenotypes_number, 1) ; %vector of phenotypes diffusion
-phe_diff(1) = 0.1 ;
+phe_diff(1) = 0.2 ;
 for i=2:phenotypes_number
-    phe_diff(i)=phe_diff(i-1)*0.8; % chaquenouveau phénotype aura une vitesse de difusion plus faible que le précédent
+    phe_diff(i)=phe_diff(i-1)*0.5; % chaquenouveau phénotype aura une vitesse de difusion plus faible que le précédent
 end
 
 %Environment matrix
@@ -457,7 +458,7 @@ end
 %Mutation matrix
 Mutation = zeros(phenotypes_number, phenotypes_number) ;
 
-epsilon=0.0001;
+epsilon=0.001;
 
 
 % linear Discretization matrix
@@ -504,7 +505,17 @@ for i=0:phenotypes_number-1
 end
 
 
-
+C=zeros(200,1000,3);
+C(:,1:100-1,1) = 0.55;
+C(:,101:200-1,2) = 0.60;
+C(:,201:300-1,3) = 0.65;
+C(:,301:400-1,1) = 0.70;
+C(:,401:500-1,2) = 0.75;
+C(:,501:600-1,3) = 0.80;
+C(:,601:700-1,1) = 0.85;
+C(:,701:800-1,2) = 0.9;
+C(:,801:900-1,3) = 0.95;
+C(:,901:1000,1) = 1;
 
 
 
@@ -518,7 +529,11 @@ while t < nt-1
     t=t+1;
     
     if mod(t,1000)==0
-        Mem(t/1000 +1,:)=E;
+        Mem(201-(t/1000 +1),:)=E;
+        figure(3)
+        surf(Mem,C,'LineStyle',':', 'FaceAlpha',1,'FaceLighting','gouraud') ;
+
+        
     end
     
     if t>apparition
@@ -592,16 +607,16 @@ plot((h:h:x_length),a,'g--')
 hold off
 
 figure(3)
-    C(:,1:100,1) = ones(100,100)*0.55;
-    C(:,101:200,2) = ones(100,100)*0.60;
-    C(:,201:300,3) = ones(100,100)*0.65;
-    C(:,301:400,1) = ones(100,100)*0.70;
-    C(:,401:500,2) = ones(100,100)*0.75;
-    C(:,501:600,3) = ones(100,100)*0.80;
-    C(:,601:700,1) = ones(100,100)*0.85;
-    C(:,701:800,2) = ones(100,100)*0.9;
-    C(:,801:900,3) = ones(100,100)*0.95;
-    C(:,901:1000,2) = ones(100,100)
+    C(:,1:100,1) = ones(200,100)*0.55;
+    C(:,101:200,2) = ones(200,100)*0.60;
+    C(:,201:300,3) = ones(200,100)*0.65;
+    C(:,301:400,1) = ones(200,100)*0.70;
+    C(:,401:500,2) = ones(200,100)*0.75;
+    C(:,501:600,3) = ones(200,100)*0.80;
+    C(:,601:700,1) = ones(200,100)*0.85;
+    C(:,701:800,2) = ones(200,100)*0.9;
+    C(:,801:900,3) = ones(200,100)*0.95;
+    C(:,901:1000,2) = ones(200,100)
     surf(Mem,C,'LineStyle',':', 'FaceAlpha',1) ;
     
 
@@ -612,7 +627,7 @@ figure(3)
 x_length = 10 ; % space dimension
 points = 100 ; % iteration number space
 tfinal = 400 ; %final time
-Dt = tfinal/100000 ; % time step
+Dt = tfinal/200000 ; % time step
 nt = tfinal/Dt ; % iteration number time
 h = x_length/points ; % space step
 afficher=true;
